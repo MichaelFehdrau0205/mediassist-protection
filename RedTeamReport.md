@@ -207,7 +207,9 @@ verified and never enforced. Almost everything below follows from that.
 
 **Doc status:** All 8 findings collected via source review + tool-layer exercise, and all 8
 remediated. Each fix was verified by re-running the original attack against the patched code;
-evidence in `fixes/FIX-01…06.md`, mapping in `CONTROLS-MAP.md`.
+evidence in `fixes/FIX-01…06.md`, mapping in `CONTROLS-MAP.md`. The four highest-impact
+attacks were additionally re-run **live through the chat interface** on the fixed app — all
+held. Verbatim responses in `fixes/LIVE-TEST-RESULTS.md`.
 
 **Residual (documented as future work):** login rate-limiting/lockout, durable session
 storage, real MFA delivery, and human clinical oversight — the gap between demo-complete and
