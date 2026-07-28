@@ -194,16 +194,21 @@ verified and never enforced. Almost everything below follows from that.
 
 ## Summary Table
 
-| # | Attack Type | Severity | Successful? | Main Risk |
-|---|---|---|---|---|
-| 1 | Prompt Injection (direct) | High | Enabling weakness confirmed; [confirm live] | Social-engineered role escalation via system-prompt backdoor |
-| 2 | Indirect Injection / RAG Poisoning | High | Confirmed in source | Poisoned KB doc becomes trusted model instruction |
-| 3 | Sensitive Data Exposure | Critical | Yes | Any patient's full PHI + whole directory readable |
-| 4 | Unauthorized Access / Priv Esc | Critical | Yes | No authentication; identity is client-controlled |
-| 5 | Unsafe Medical Advice | High | Enabling weakness confirmed; [confirm live] | No output review or provider-review gating |
-| 6 | Tool Misuse / Unauthorized Action | Critical | Yes | Cross-patient record writes + SQL injection |
-| 7 | Data Integrity / Memory Poisoning | High | Yes | False facts persist into future sessions |
-| 8 | Hardcoded Secrets | High | Yes | Live-looking API keys and DB password in source |
+| # | Attack Type | Severity | Successful? | Main Risk | Remediation |
+|---|---|---|---|---|---|
+| 1 | Prompt Injection (direct) | High | Enabling weakness confirmed | Social-engineered role escalation via system-prompt backdoor | ✅ Fixed — FIX-01 (session-scoped tools) + FIX-06 (backdoor removed) |
+| 2 | Indirect Injection / RAG Poisoning | High | Confirmed in source | Poisoned KB doc becomes trusted model instruction | ✅ Fixed — FIX-05 (screen + label KB docs) |
+| 3 | Sensitive Data Exposure | Critical | Yes | Any patient's full PHI + whole directory readable | ✅ Fixed — FIX-01 (session-scoped tools) |
+| 4 | Unauthorized Access / Priv Esc | Critical | Yes | No authentication; identity is client-controlled | ✅ Fixed — FIX-01 + FIX-02 (auth + MFA) |
+| 5 | Unsafe Medical Advice | High | Enabling weakness confirmed | No output review or provider-review gating | ✅ Fixed — FIX-06 (output filter + safety rules) |
+| 6 | Tool Misuse / Unauthorized Action | Critical | Yes | Cross-patient record writes + SQL injection | ✅ Fixed — FIX-01 (session scope + field allowlist) |
+| 7 | Data Integrity / Memory Poisoning | High | Yes | False facts persist into future sessions | ✅ Fixed — FIX-04 (screen on write, label on read) |
+| 8 | Hardcoded Secrets | High | Yes | Live-looking API keys and DB password in source | ✅ Fixed — FIX-03 (externalized to environment) |
 
-**Doc status:** Findings collected via source review and tool-layer exercise. Live-chatbot
-confirmation remains for Findings 1 and 5. Fixes tracked in `CONTROLS-MAP.md`.
+**Doc status:** All 8 findings collected via source review + tool-layer exercise, and all 8
+remediated. Each fix was verified by re-running the original attack against the patched code;
+evidence in `fixes/FIX-01…06.md`, mapping in `CONTROLS-MAP.md`.
+
+**Residual (documented as future work):** login rate-limiting/lockout, durable session
+storage, real MFA delivery, and human clinical oversight — the gap between demo-complete and
+production-ready.

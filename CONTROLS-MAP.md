@@ -6,6 +6,27 @@ has to live inside MediAssist (not this repo — MediAssist).
 
 Priority order below matches the ranked threat list in `docs/threat-model.md`.
 
+## Remediation status — ALL 8 FINDINGS CLOSED
+
+Every red team finding has been fixed in the app and verified by re-running the attack.
+Fix evidence lives in `fixes/FIX-01…06.md`.
+
+| Finding | Fix | Evidence |
+|---|---|---|
+| 3 — PHI disclosure | Session-scoped tools | FIX-01 |
+| 4 — Unauthorized access | Session-scoped tools + auth | FIX-01, FIX-02 |
+| 6 — Tool misuse + SQL injection | Session-scoped tools + allowed-field allowlist | FIX-01 |
+| 8 — Hardcoded secrets | Externalized to environment | FIX-03 |
+| Spoofing / no auth | Password + MFA login, session tokens | FIX-02 |
+| 7 — Memory poisoning | Screen on write + label on read | FIX-04 |
+| 2 — RAG poisoning | Screen KB docs + label as reference | FIX-05 |
+| 5 — Unsafe advice + 1 residual | Output filter + prompt hardening | FIX-06 |
+
+Known residual limitations (documented, not yet addressed): login rate-limiting/lockout,
+durable session storage, real MFA delivery, and human clinical oversight. These are noted
+in the fix docs as the gap between "demo-complete" and "production-ready."
+
+
 | # | Threat (from threat model) | Primary control | Reference file | Verifying test | Where it installs in MediAssist |
 |---|---|---|---|---|---|
 | 1 | Prompt injection against chat / retrieved docs | Session-scoped tools — model never supplies patient identity | `controls/session_authz.py` | `test_hijacked_model_still_cannot_pass_a_foreign_id` | Every tool the agent can call; the tool router |
@@ -30,20 +51,20 @@ payload in the playbook.
 is the "Transfer" decision from your threat model. Your job is to confirm MFA is actually
 enforced and session tokens expire, not to build auth from scratch.
 
-## The build backlog, in order
+## The build backlog — COMPLETED
 
-Do these one branch at a time. Smallest blast radius first.
+Done one at a time, each verified by re-running the matching red team payload.
 
-1. **Audit logging** — install first. It's low-risk to add and it's how you'll *see* whether the other controls work during red teaming. `audit_log.py` → wrap every tool call.
-2. **Session-scoped tools** — the big one. Find every tool that takes a `patient_id` argument and refactor it to read identity from the session. Delete anything shaped like `get_patient_record_UNSAFE`. This closes threats 1–4.
-3. **RAG ingest screening** — add `screen_document` to whatever loads documents into the knowledge base. Closes threat 7's plant step.
-4. **Output filter** — add `scrub_response` as the final step before a reply renders. The net under threats 1 and 3.
-5. **Confirmation step** — booking/cancel/modify require a real user click, not just model intent. Finishes threat 2.
-6. **Memory validation** — once you've seen the memory store, apply the "no permissions in memory" rule. Closes threat 5.
+1. ✅ **Session-scoped tools** — every tool reads identity from the session, not the model. Closed threats 1–4 + 6. (FIX-01)
+2. ✅ **Authentication + MFA** — password + 6-digit code; session token is the source of identity. Closed spoofing/no-auth. (FIX-02)
+3. ✅ **Secrets externalized** — all keys moved to the environment. (FIX-03)
+4. ✅ **Memory validation** — screen on write, label on read. Closed threat 7. (FIX-04)
+5. ✅ **RAG screening** — poisoned KB docs quarantined at load; content labeled reference-only. Closed threat 2. (FIX-05)
+6. ✅ **Output filter + prompt hardening** — PHI/leak net on responses; backdoor removed; safety rules added. Closed threat 5 + residual 1. (FIX-06)
 
-After each one: run the matching red team payload from `redteam/payload-playbook.md` and
-confirm it now fails at the tool, not just in chat. That's the loop — attack, fix, re-attack,
-prove it's blocked.
+Not yet done (documented as future work): a per-tool audit log (reference `audit_log.py`
+exists in `controls/`), an explicit UI confirmation step on state-changing actions, and the
+production-hardening items (rate-limiting, durable sessions, real MFA delivery).
 
 ## In Cursor
 
